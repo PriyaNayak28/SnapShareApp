@@ -38,6 +38,29 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
+function PostComment(childElement, commentInput, sendButton, commentButton, commentText) {
+    const commentElement = document.createElement('p');
+    commentElement.textContent = `Anonymous: ${commentText}`;
+
+    // Check if the commentButton is already added to the childElement
+    if (commentButton.parentNode === childElement) {
+        // Insert the new comment before the commentButton
+        childElement.insertBefore(commentElement, commentButton);
+    } else {
+        // If the commentButton is not part of childElement yet, just append the comment
+        childElement.appendChild(commentElement);
+    }
+
+    // Clear input field
+    commentInput.value = '';
+    // Hide the input field and send button
+    commentInput.style.display = 'none';
+    sendButton.style.display = 'none';
+    // Show the comment button again
+    commentButton.style.display = 'block';
+
+}
+
 async function uploadPost(post) {
     const parentElement = document.getElementById('posts');
     const childElement = document.createElement('li');
@@ -51,10 +74,21 @@ async function uploadPost(post) {
     commentInput.type = 'text';
     commentInput.placeholder = 'Type your comment';
     commentInput.style.display = 'none'; // Initially hide the comment input field
-
     const sendButton = document.createElement('button');
     sendButton.textContent = 'Send'; // Create a send button
     sendButton.style.display = 'none'; // Initially hide the send button
+
+    if (post.comment) {
+        const strComments = post.comment
+        const array = strComments.split('\n');
+
+
+        for (let comment of array) {
+            PostComment(childElement, commentInput, sendButton, commentButton, comment)
+        }
+
+
+    }
 
     commentButton.addEventListener('click', () => {
         if (commentInput.style.display === 'none') {
@@ -69,18 +103,9 @@ async function uploadPost(post) {
             const commentText = commentInput.value;
             // Send comment to server
             await axios.patch(`http://localhost:4000/post/add-comment/${post.id}`, { comment: commentText });
-            // Display the comment in UI with anonymous username
-            const commentElement = document.createElement('p');
-            // Prepend anonymous username followed by comment text
-            commentElement.textContent = `Anonymous: ${commentText}`;
-            childElement.appendChild(commentElement);
-            // Clear input field
-            commentInput.value = '';
-            // Hide the input field and send button
-            commentInput.style.display = 'none';
-            sendButton.style.display = 'none';
-            // Show the comment button again
-            commentButton.style.display = 'block';
+
+            PostComment(childElement, commentInput, sendButton, commentButton, commentText)
+
         } catch (error) {
             console.log('Error adding comment:', error.message);
         }
@@ -92,5 +117,3 @@ async function uploadPost(post) {
 
     parentElement.appendChild(childElement);
 }
-
-
